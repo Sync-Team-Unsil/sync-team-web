@@ -1,19 +1,26 @@
+// src/app/register/page.tsx
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { Loader2 } from "lucide-react"
 
 export default function RegisterPage() {
   const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    
-    // 1. Ambil semua data dari Form
+    setIsLoading(true)
+
     const formData = new FormData(e.currentTarget)
+    const firstName = formData.get("firstName") as string
+    const lastName = formData.get("lastName") as string
     const username = formData.get("username") as string
     const email = formData.get("email") as string
     const password = formData.get("password") as string
@@ -22,96 +29,161 @@ export default function RegisterPage() {
     // Validasi sederhana di Frontend
     if (password !== confirmPassword) {
       alert("Password dan Confirm Password tidak cocok!")
+      setIsLoading(false)
       return
     }
 
     try {
-      // 2. Tembak API Dummy kita
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password })
+        body: JSON.stringify({ firstName, lastName, username, email, password })
       })
 
       if (response.ok) {
-        // 3. Simpan email sementara di Local Storage sebagai "jembatan" ke halaman Verify
         localStorage.setItem("pendingVerificationEmail", email)
-        
-        // 4. Pindah ke halaman Verify
         router.push('/verify')
       } else {
         const errorData = await response.json()
-        alert(errorData.message) // Memunculkan "Email sudah digunakan!"
+        alert(errorData.message)
       }
     } catch (error) {
       console.error("Gagal mendaftar:", error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
     <div className="w-full lg:grid lg:grid-cols-2 min-h-screen">
-      {/* ... BAGIAN KIRI (Gambar) TETAP SAMA ... */}
-      <div className="relative hidden lg:flex flex-col justify-end bg-zinc-900 text-white p-10 bg-cover bg-center" style={{ backgroundImage: "url('/placeholder-image.jpg')" }}>
-        <div className="absolute inset-0 bg-black/40"></div>
-        <div className="relative z-20">
-          <h2 className="text-3xl font-bold mb-2">Lorem Ipsum Dolor Sit Amet</h2>
-          <p className="text-zinc-300 max-w-md">Lorem Ipsum is simply dummy text.</p>
+      {/* LEFT: Hero Image */}
+      <div className="relative hidden lg:flex flex-col justify-end overflow-hidden">
+        <Image
+          src="/hero-image.png"
+          alt="Team collaboration"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+        <div className="relative z-20 p-10 pb-12">
+          <h2 className="text-3xl font-bold text-white mb-2 leading-tight">
+            Lorem Ipsum Dolor Sit Amet
+          </h2>
+          <p className="text-zinc-300 max-w-md text-sm leading-relaxed">
+            Lorem Ipsum is simply dummy text of the printing and typesetting industry.
+          </p>
         </div>
       </div>
 
-      {/* BAGIAN KANAN */}
-      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-[450px] space-y-8">
-          
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">Welcome to SyncTeam</h1>
-            <p className="text-sm text-zinc-500">Create an account for using sync team.</p>
+      {/* RIGHT: Register Form */}
+      <div className="flex items-center justify-center py-12 px-6 lg:px-12">
+        <div className="w-full max-w-[440px] space-y-8">
+
+          {/* Logo */}
+          <div className="flex items-center gap-2 mb-2">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13 2L4.09 12.36a1 1 0 00.76 1.64H11l-1 8 8.91-10.36a1 1 0 00-.76-1.64H13l1-8z" fill="#a87ffb" stroke="#a87ffb" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className="font-bold text-lg text-[#a87ffb]">SyncTeam</span>
           </div>
 
-          {/* Form diubah dengan onSubmit dan penambahan 'name' pada Input */}
+          {/* Heading */}
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Welcome to SyncTeam</h1>
+            <p className="text-sm text-zinc-500 leading-relaxed">
+              Create an account for using sync team, plase enter your personal information
+            </p>
+          </div>
+
+          {/* Form */}
           <form className="space-y-4" onSubmit={handleRegister}>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input id="firstName" name="firstName" required placeholder="First name" className="bg-slate-50" />
+                <Label htmlFor="firstName" className="text-sm font-semibold text-zinc-700">First Name</Label>
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  required
+                  placeholder="First name"
+                  className="bg-[#f8f9fb] border-zinc-200 h-12 rounded-xl placeholder:text-zinc-400 focus-visible:ring-[#a87ffb]"
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input id="lastName" name="lastName" required placeholder="Last name" className="bg-slate-50" />
+                <Label htmlFor="lastName" className="text-sm font-semibold text-zinc-700">Last Name</Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  required
+                  placeholder="Last name"
+                  className="bg-[#f8f9fb] border-zinc-200 h-12 rounded-xl placeholder:text-zinc-400 focus-visible:ring-[#a87ffb]"
+                />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input id="username" name="username" required placeholder="Please input your Username" className="bg-slate-50" />
+              <Label htmlFor="username" className="text-sm font-semibold text-zinc-700">Username</Label>
+              <Input
+                id="username"
+                name="username"
+                required
+                placeholder="Please input your Username"
+                className="bg-[#f8f9fb] border-zinc-200 h-12 rounded-xl placeholder:text-zinc-400 focus-visible:ring-[#a87ffb]"
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required placeholder="Please input your Email" className="bg-slate-50" />
+              <Label htmlFor="email" className="text-sm font-semibold text-zinc-700">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                required
+                placeholder="Please input your Email"
+                className="bg-[#f8f9fb] border-zinc-200 h-12 rounded-xl placeholder:text-zinc-400 focus-visible:ring-[#a87ffb]"
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required placeholder="Please input your Password" className="bg-slate-50" />
+              <Label htmlFor="password" className="text-sm font-semibold text-zinc-700">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required
+                placeholder="Please input your Password"
+                className="bg-[#f8f9fb] border-zinc-200 h-12 rounded-xl placeholder:text-zinc-400 focus-visible:ring-[#a87ffb]"
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input id="confirmPassword" name="confirmPassword" type="password" required placeholder="Please input your Password again" className="bg-slate-50" />
+              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-zinc-700">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                required
+                placeholder="Please input your Password again"
+                className="bg-[#f8f9fb] border-zinc-200 h-12 rounded-xl placeholder:text-zinc-400 focus-visible:ring-[#a87ffb]"
+              />
             </div>
 
-            <Button className="w-full bg-[#a87ffb] hover:bg-[#9261fa] text-white py-6 mt-6 rounded-lg font-medium text-md" type="submit">
-              Register
+            <Button
+              className="w-full bg-[#a87ffb] hover:bg-[#9261fa] text-white h-14 mt-4 rounded-xl font-semibold text-base shadow-lg shadow-purple-200/50 transition-all active:scale-[0.98]"
+              type="submit"
+              disabled={isLoading}
+            >
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Register"}
             </Button>
           </form>
 
-          <div className="text-center text-sm text-zinc-500 pt-4">
+          {/* Footer Link */}
+          <p className="text-center text-sm text-zinc-500">
             already have account,{" "}
             <Link href="/login" className="text-blue-500 hover:text-blue-600 font-medium hover:underline transition-colors">
               login
             </Link>
-          </div>
+          </p>
 
         </div>
       </div>
